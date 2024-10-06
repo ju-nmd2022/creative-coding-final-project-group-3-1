@@ -4,9 +4,29 @@ let walls = [];
 let mazePatterns = [];
 let scale;
 let masterVolume = 15;
+let handPose;
+let video;
+let hands = [];
+
+let pinch = 0;
+
+function preload() {
+  // Load the handPose model
+  handPose = ml5.handPose({
+    flipped: true,
+  });
+}
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
+  createCanvas(windowHeight * 4 / 3, windowHeight);
+
+  // Create the webcam video and hide it
+  video = createCapture(VIDEO);
+  video.size(width, height);
+  video.hide();
+  // Start detecting hands from the webcam video
+  handPose.detectStart(video, gotHands);
+
   background(0);
   Tone.start();
   scale = Tonal.Scale.get("C3 major").notes; // get the notes of a certain scale and put in the "scale" array
@@ -18,6 +38,10 @@ function setup() {
 
 function draw() {
   background(0);
+
+  // Draw the webcam video
+  //image(video, 0, 0, width, height); // let's comment this out and not draw the video hehe
+
   for (let str of strings) {
     str.update();
     str.display();
@@ -26,8 +50,34 @@ function draw() {
   stroke(255); 
   strokeWeight(25); 
   noFill();
+
   for (let wall of walls) {
     line(wall.x1, wall.y1, wall.x2, wall.y2);
+  }
+
+  drawThePinch();
+
+  checkForPinch();
+}
+
+function drawThePinch(){
+  // If there is at least one hand
+  if (hands.length > 0) {
+    // Find the index finger tip and thumb tip
+    let finger = hands[0].index_finger_tip;
+    let thumb = hands[0].thumb_tip;
+
+    // Draw circles at finger positions
+    let centerX = (finger.x + thumb.x) / 2;
+    let centerY = (finger.y + thumb.y) / 2;
+    // Calculate the pinch "distance" between finger and thumb
+    let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
+
+    // This circle's size is controlled by a "pinch" gesture
+    fill(0, 255, 0, 200);
+    stroke(0);
+    strokeWeight(2);
+    circle(centerX, centerY, pinch);
   }
 }
 
@@ -90,10 +140,28 @@ class StringObj {
       }
     }
 
-    if(dist(mouseX, mouseY, this.position.x, this.position.y) <= 20) 
+    if(dist(mouseX, mouseY, this.position.x, this.position.y) <= 20) // check if the mouse pointer is near the head
       this.selected = true;
     else 
       this.selected = false;
+
+    // If there is at least one hand
+    if (hands.length > 0) {
+      // Find the index finger tip and thumb tip
+      let finger = hands[0].index_finger_tip;
+      let thumb = hands[0].thumb_tip;
+
+      // Draw circles at finger positions
+      let centerX = (finger.x + thumb.x) / 2;
+      let centerY = (finger.y + thumb.y) / 2;
+      // Calculate the pinch "distance" between finger and thumb
+      let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
+
+      if((dist(centerX, centerY, this.position.x, this.position.y) <= 80) && pinch <= 160)
+        this.selected = true;
+      else
+        this.selected = false;
+    }
   }
 
   display() {
@@ -256,8 +324,8 @@ function generateWalls() {
 function mousePressed() {
   for(let i = 0; i < strings.length; i++){
     if(strings[i].selected == true){
-      strings[i].velocity.x *= 0; // speed up the horizontal movement of the string
-      strings[i].velocity.y *= 0; // speed up the vertical movement of the string
+      strings[i].velocity.x *= 0; // stop the horizontal movement of the string
+      strings[i].velocity.y *= 0; // stop the vertical movement of the string
       strings[i].synth.volume.value -= 10;
       strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
       strings[i].frozen = true;
@@ -277,4 +345,34 @@ function keyPressed(){ // do something is a key on the keyboard is pressed
       }
     }
   }
+}
+
+function checkForPinch(){
+  if (hands.length > 0) {
+    // Find the index finger tip and thumb tip
+    let finger = hands[0].index_finger_tip;
+    let thumb = hands[0].thumb_tip;
+
+    // Draw circles at finger positions
+    let centerX = (finger.x + thumb.x) / 2;
+    let centerY = (finger.y + thumb.y) / 2;
+    // Calculate the pinch "distance" between finger and thumb
+    let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
+
+    for(let i = 0; i < strings.length; i++){
+      if(strings[i].selected == true && pinch <= 80){
+        strings[i].velocity.x *= 0; // stop the horizontal movement of the string
+        strings[i].velocity.y *= 0; // stop the vertical movement of the string
+        strings[i].synth.volume.value -= 10;
+        strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+        strings[i].frozen = true;
+      }
+    }
+  }
+}
+
+// Callback function for when handPose outputs data
+function gotHands(results) {
+  // Save the output to the hands variable
+  hands = results;
 }
