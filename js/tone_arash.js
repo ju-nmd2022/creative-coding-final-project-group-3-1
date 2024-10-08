@@ -60,7 +60,7 @@ function draw() {
   checkForPinch();
 }
 
-function drawThePinch(){
+function getHandsData(){
   // If there is at least one hand
   if (hands.length > 0) {
     // Find the index finger tip and thumb tip
@@ -73,11 +73,24 @@ function drawThePinch(){
     // Calculate the pinch "distance" between finger and thumb
     let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
 
+    return {
+      centerX: centerX,
+      centerY, centerY,
+      pinch, pinch
+    }
+  }else{
+    return false;
+  }
+}
+
+function drawThePinch(){
+  let handsData = getHandsData();
+  if(handsData != false){
     // This circle's size is controlled by a "pinch" gesture
     fill(0, 255, 0, 200);
     stroke(0);
     strokeWeight(2);
-    circle(centerX, centerY, pinch);
+    circle(handsData.centerX, handsData.centerY, handsData.pinch);
   }
 }
 
@@ -145,19 +158,9 @@ class StringObj {
     else 
       this.selected = false;
 
-    // If there is at least one hand
-    if (hands.length > 0) {
-      // Find the index finger tip and thumb tip
-      let finger = hands[0].index_finger_tip;
-      let thumb = hands[0].thumb_tip;
-
-      // Draw circles at finger positions
-      let centerX = (finger.x + thumb.x) / 2;
-      let centerY = (finger.y + thumb.y) / 2;
-      // Calculate the pinch "distance" between finger and thumb
-      let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
-
-      if((dist(centerX, centerY, this.position.x, this.position.y) <= 80) && pinch <= 160)
+    let handsData = getHandsData();
+    if(handsData != false){
+      if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) <= 80) && handsData.pinch <= 160)
         this.selected = true;
       else
         this.selected = false;
@@ -324,11 +327,19 @@ function generateWalls() {
 function mousePressed() {
   for(let i = 0; i < strings.length; i++){
     if(strings[i].selected == true){
-      strings[i].velocity.x *= 0; // stop the horizontal movement of the string
-      strings[i].velocity.y *= 0; // stop the vertical movement of the string
-      strings[i].synth.volume.value -= 10;
-      strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
-      strings[i].frozen = true;
+      if(strings[i].frozen == false){
+        strings[i].velocity.x *= 0; // stop the horizontal movement of the string
+        strings[i].velocity.y *= 0; // stop the vertical movement of the string
+        strings[i].synth.volume.value -= 10;
+        strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+        strings[i].frozen = true;
+      }else{
+        strings[i].velocity.x = random(-2, 2);
+        strings[i].velocity.y = random(-2, 2);
+        strings[i].synth.volume.value = 1;
+        strings[i].synth.triggerRelease();
+        strings[i].frozen = false;
+      }
       return;
     }
   }
