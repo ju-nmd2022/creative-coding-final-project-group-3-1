@@ -427,8 +427,10 @@ function mousePressed() {
 }
 
 function mouseDragged(){
-  newLine.endCoordinates.x = mouseX;
-  newLine.endCoordinates.y = mouseY;
+  if(cursorState == "creating"){
+    newLine.endCoordinates.x = mouseX;
+    newLine.endCoordinates.y = mouseY;
+  }
 }
 
 function mouseReleased(){
@@ -436,10 +438,10 @@ function mouseReleased(){
     // calculate the rest of the properties by the line's speed, and start and end positions
     // newLine.length = dist(newLine.startCoordinates.x, newLine.startCoordinates.y, newLine.endCoordinates.x, newLine.endCoordinates.y);
     newLine.length = p5.Vector.dist(newLine.startCoordinates, newLine.endCoordinates);
-    console.log("L(" + newLine.length + ")");
+    // console.log("L(" + newLine.length + ")");
     
     let numberOfSegments = Math.ceil(newLine.length / newLine.speed);
-    if(numberOfSegments < 1){
+    if(numberOfSegments <= 1){
       newLine = null;
       cursorState = "idle";
       return;
