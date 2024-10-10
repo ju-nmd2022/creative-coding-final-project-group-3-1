@@ -7,6 +7,8 @@ let masterVolume = 15;
 let handPose;
 let video;
 let hands = [];
+let cursorState = "idle"; // could be 'idle', 'selecting', or 'creating'
+let newLine = null;
 
 let pinch = 0;
 
@@ -37,7 +39,37 @@ function setup() {
 }
 
 function draw() {
-  background(0);
+  let isSelecting = false;
+
+  for(str of strings){
+    isSelecting |= str.selected;
+  }
+  switch(cursorState){
+    case "idle":
+      if(isSelecting){
+        cursorState = "selecting";
+      }
+      break;
+    case "selecting":
+      if(!isSelecting){
+        cursorState = "idle";
+      }
+      break;
+    case "creating":
+      break;
+  }
+
+  switch(cursorState){
+    case "idle":
+      background(0);
+      break;
+    case "selecting":
+      background(220, 0, 0);
+      break;
+    case "creating":
+      background(20);
+      break;
+  }
 
   // Draw the webcam video
   //image(video, 0, 0, width, height); // let's comment this out and not draw the video hehe
@@ -47,8 +79,12 @@ function draw() {
     str.display();
   }
 
+  if(newLine != null){
+    newLine.display();
+  }
+
   stroke(255); 
-  strokeWeight(25); 
+  strokeWeight(25);
   noFill();
 
   for (let wall of walls) {
@@ -91,6 +127,36 @@ function drawThePinch(){
     stroke(0);
     strokeWeight(2);
     circle(handsData.centerX, handsData.centerY, handsData.pinch);
+  }
+}
+
+class Line{
+  constructor(x, y){
+    this.startCoordinates = createVector(x, y);
+    this.endCoordinates = createVector(x, y);
+    this.velocity = createVector(0, 0);
+    this.speed = random(2, 4);
+    this.length = 0;
+    this.thickness = random(4, 12);
+    this.color = color(random(255), random(255), random(255));
+    this.segments = [];
+  }
+
+  display() {
+    stroke(this.color);
+    strokeWeight(this.thickness);
+    noFill();
+    
+    // draw the line
+    line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
+
+    // draw the head of the new line
+    fill(255);
+    noStroke();
+    let headRadius = this.thickness + 5;
+
+    // make the head of the new line bigger and distinguishable
+    ellipse(this.endCoordinates.x, this.endCoordinates.y, headRadius);
   }
 }
 
@@ -148,15 +214,21 @@ class StringObj {
     }
     if(!this.frozen){ // move the string only if it is not frozen
       this.segments.push(this.position.copy());
-      while ((this.segments.length > this.length / 10)) {
+      // console.log("segments: " + this.segments.length + " speed: " + this.speed + " length: " + this.length);
+      
+      while (this.segments.length * this.speed > this.length) {
         this.segments.shift();
       }
     }
 
     if(dist(mouseX, mouseY, this.position.x, this.position.y) <= 20) // check if the mouse pointer is near the head
+    {
       this.selected = true;
+    }
     else 
+    {
       this.selected = false;
+    }
 
     let handsData = getHandsData();
     if(handsData != false){
@@ -325,33 +397,89 @@ function generateWalls() {
 }
 
 function mousePressed() {
-  for(let i = 0; i < strings.length; i++){
-    if(strings[i].selected == true){
-      if(strings[i].frozen == false){
-        strings[i].velocity.x *= 0; // stop the horizontal movement of the string
-        strings[i].velocity.y *= 0; // stop the vertical movement of the string
-        strings[i].synth.volume.value -= 10;
-        strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
-        strings[i].frozen = true;
-      }else{
-        strings[i].velocity.x = random(-2, 2);
-        strings[i].velocity.y = random(-2, 2);
-        strings[i].synth.volume.value = 1;
-        strings[i].synth.triggerRelease();
-        strings[i].frozen = false;
+  if(cursorState == "selecting"){
+    for(let i = 0; i < strings.length; i++){
+      if(strings[i].selected == true){
+        if(strings[i].frozen == false){
+          strings[i].velocity.x *= 0; // stop the horizontal movement of the string
+          strings[i].velocity.y *= 0; // stop the vertical movement of the string
+          // strings[i].synth.volume.value -= 10;
+          strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+          strings[i].frozen = true;
+        }else{
+          strings[i].velocity.x = random(-2, 2);
+          strings[i].velocity.y = random(-2, 2);
+          strings[i].synth.volume.value = 1;
+          strings[i].synth.triggerRelease();
+          strings[i].frozen = false;
+        }
+        return;
       }
-      return;
     }
   }
-  strings.push(new StringObj(mouseX, mouseY));
+  else if(cursorState == "idle"){
+    cursorState = "creating";
+    // strings.push(new StringObj(mouseX, mouseY)); // previously we instantly created a string
+
+    // but now, we start creating a line
+    newLine = new Line(mouseX, mouseY);
+  }
 }
 
-function keyPressed(){ // do something is a key on the keyboard is pressed
+function mouseDragged(){
+  newLine.endCoordinates.x = mouseX;
+  newLine.endCoordinates.y = mouseY;
+}
+
+function mouseReleased(){
+  if(cursorState == "creating"){
+    // calculate the rest of the properties by the line's speed, and start and end positions
+    // newLine.length = dist(newLine.startCoordinates.x, newLine.startCoordinates.y, newLine.endCoordinates.x, newLine.endCoordinates.y);
+    newLine.length = p5.Vector.dist(newLine.startCoordinates, newLine.endCoordinates);
+    console.log("L(" + newLine.length + ")");
+    
+    let numberOfSegments = Math.ceil(newLine.length / newLine.speed);
+    if(numberOfSegments < 1){
+      newLine = null;
+      cursorState = "idle";
+      return;
+    }
+    // console.log("N(" + numberOfSegments + ")");
+    newLine.velocity = p5.Vector.sub(newLine.endCoordinates, newLine.startCoordinates).normalize().mult(newLine.speed);
+    // console.log("S(" + newLine.speed + ")");
+    // console.log("V(" + newLine.velocity.x + ", " + newLine.velocity.y + ")");
+    for(let i = 0; i < numberOfSegments; i++){
+      newLine.segments[numberOfSegments - i] = createVector(
+        newLine.endCoordinates.x - newLine.velocity.x * i,
+        newLine.endCoordinates.y - newLine.velocity.y * i);
+      // console.log("D(" + newLine.segments[numberOfSegments - i].x + ", " + newLine.segments[numberOfSegments - i].y + ")");
+    }
+    newLine.segments[0] = createVector(newLine.startCoordinates.x, newLine.startCoordinates.y);
+    // console.log("D(" + newLine.segments[0].x + ", " + newLine.segments[0].y + ")");
+
+    // create a new string based on the finished line
+    let newString = new StringObj(newLine.endCoordinates.x, newLine.endCoordinates.y);
+    newString.velocity = newLine.velocity;
+    newString.speed = newLine.speed;
+    newString.length = newLine.length;
+    newString.thickness = newLine.thickness;
+    newString.color = newLine.color;
+    newString.segments = newLine.segments;
+    strings.push(newString);
+
+    // reset the temporary line cache variable
+    newLine = null;
+  }
+  cursorState = "idle";
+}
+
+function keyPressed(){ // do something if a key on the keyboard is pressed
   if(keyCode === BACKSPACE){
     for(let i = 0; i < strings.length; i++){
       if(strings[i].selected == true){
         strings[i].synth.triggerRelease(); // when removing a string, stop the sound it is making
         strings.splice(i, 1); // remove the string altogether
+        cursorState = "idle";
         return;
       }
     }
@@ -359,22 +487,13 @@ function keyPressed(){ // do something is a key on the keyboard is pressed
 }
 
 function checkForPinch(){
-  if (hands.length > 0) {
-    // Find the index finger tip and thumb tip
-    let finger = hands[0].index_finger_tip;
-    let thumb = hands[0].thumb_tip;
-
-    // Draw circles at finger positions
-    let centerX = (finger.x + thumb.x) / 2;
-    let centerY = (finger.y + thumb.y) / 2;
-    // Calculate the pinch "distance" between finger and thumb
-    let pinch = dist(finger.x, finger.y, thumb.x, thumb.y);
-
+  let handsData = getHandsData();
+  if(handsData != false){
     for(let i = 0; i < strings.length; i++){
-      if(strings[i].selected == true && pinch <= 80){
+      if(strings[i].selected == true && handsData.pinch <= 80){
         strings[i].velocity.x *= 0; // stop the horizontal movement of the string
         strings[i].velocity.y *= 0; // stop the vertical movement of the string
-        strings[i].synth.volume.value -= 10;
+        // strings[i].synth.volume.value -= 10;
         strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
         strings[i].frozen = true;
       }
