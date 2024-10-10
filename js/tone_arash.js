@@ -179,7 +179,7 @@ class StringObj {
       }
     }).toDestination();
     this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    this.synth.oscillator.type = "sawtooth"; // changing the synthesizer's oscillator type
+    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
   }
 
   update() {
@@ -258,6 +258,24 @@ class StringObj {
     // if the mouse is on the head of the string, make it bigger and distinguishable
     headRadius += this.selected == true? 10 : 0;
     ellipse(this.segments[this.segments.length - 1].x, this.segments[this.segments.length - 1].y, headRadius);
+    
+    push();
+    translate(this.segments[this.segments.length - 1].x, this.segments[this.segments.length - 1].y);
+    rotate(Math.atan(this.velocity.y / this.velocity.x));
+    // make the eyes
+    ellipse(0, -10, 20);
+    ellipse(0, 10, 20);
+    // make the black of the eyes
+    strokeWeight(1);
+    stroke(255);
+    fill(0);
+    ellipse(5, -10, 14);
+    ellipse(5, 10, 14);
+    // make the spark in the eyes
+    fill(255);
+    ellipse(0, -10, 8);
+    ellipse(0, 10, 8);
+    pop();
   }
 
   playBounceTone() {
@@ -485,6 +503,9 @@ function keyPressed(){ // do something if a key on the keyboard is pressed
         return;
       }
     }
+  }
+  else if(keyCode === DELETE){ // if DELETE is pressed, remove all the strings
+    strings.splice(0, strings.length);
   }
 }
 
