@@ -404,6 +404,42 @@ mazePatterns.push([
   {x1: width/2-400, y1: height/2+350, x2: width/2-0, y2: height/2-350}, 
 ]);
 
+mazePatterns.push([
+  {x1: width/2-350, y1: height/2-350, x2: width/2+350, y2: height/2-350}, 
+  {x1: width/2+350, y1: height/2-350, x2: width/2+350, y2: height/2+350}, 
+  {x1: width/2+350, y1: height/2+350, x2: width/2-350, y2: height/2+350}, 
+  {x1: width/2-350, y1: height/2+350, x2: width/2-350, y2: height/2-350}, 
+
+  {x1: width/2-150, y1: height/2-150 , x2: width/2+150, y2: height/2-150}, 
+  {x1: width/2+150, y1: height/2-150, x2: width/2+150, y2: height/2+150}, 
+  {x1: width/2+150, y1: height/2+150, x2: width/2-150, y2: height/2+150},
+  {x1: width/2-150, y1: height/2+150, x2: width/2-150, y2: height/2-150}, 
+
+]);
+
+mazePatterns.push([
+  {x1: width/2-400, y1: height/2-400, x2: width/2+400, y2: height/2-400}, 
+  {x1: width/2+400, y1: height/2-300, x2: width/2+400, y2: height/2+400}, 
+  {x1: width/2+400, y1: height/2+400, x2: width/2-400, y2: height/2+400}, 
+  {x1: width/2-400, y1: height/2+400, x2: width/2-400, y2: height/2-400}, 
+
+  {x1: width/2-300, y1: height/2-300 , x2: width/2+300, y2: height/2-300}, 
+  {x1: width/2+300, y1: height/2-200, x2: width/2+300, y2: height/2+300}, 
+  {x1: width/2+300, y1: height/2+300, x2: width/2-300, y2: height/2+300},
+  {x1: width/2-300, y1: height/2+300, x2: width/2-300, y2: height/2-300}, 
+
+  {x1: width/2-200, y1: height/2-200, x2: width/2+200, y2: height/2-200}, 
+  {x1: width/2+200, y1: height/2-100, x2: width/2+200, y2: height/2+200}, 
+  {x1: width/2+200, y1: height/2+200, x2: width/2-200, y2: height/2+200},
+  {x1: width/2-200, y1: height/2+200, x2: width/2-200, y2: height/2-200}, 
+
+  {x1: width/2-100, y1: height/2-100, x2: width/2+100, y2: height/2-100}, 
+  {x1: width/2+100, y1: height/2, x2: width/2+100, y2: height/2+100}, 
+  {x1: width/2+100, y1: height/2+100, x2: width/2-100, y2: height/2+100},
+  {x1: width/2-100, y1: height/2+100, x2: width/2-100, y2: height/2-100}, 
+
+]);
+
 }
 
 function generateWalls() {
