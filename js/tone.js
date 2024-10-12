@@ -170,7 +170,8 @@ class StringObj {
     this.color = color(random(255), random(255), random(255));
     this.segments = [];
     this.frozen = false;
-    this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
+    this.freq = random(scale); 
+    
     this.synth = new Tone.AMSynth({
       envelope: {
         attack: 0.1,
@@ -178,11 +179,27 @@ class StringObj {
         sustain: 0.8,
         release: 0.5
       }
+    }).toDestination();  
+    
+    this.sampler = new Tone.Sampler({
+      urls: {
+        C4: "C4.mp3",
+        D4: "Ds4.mp3",
+        F4: "Fs4.mp3",
+        A4: "A4.mp3",
+      },
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      release: 1, 
+      onload: () => console.log('Sampler loaded')
     }).toDestination();
-    this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
-  }
 
+    Tone.loaded().then(() => {
+      let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"];
+      let randomNote = notes[Math.floor(Math.random() * notes.length)];
+      this.sampler.triggerAttackRelease(randomNote, '2n');
+    });
+  }
+    
   update() {
     this.position.add(this.velocity);
 
@@ -283,9 +300,9 @@ class StringObj {
   }
 
   playBounceTone() {
-    // this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
-    // this.synth.set({ frequency: this.freq });
-    this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+    let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"];
+    let randomNote = notes[Math.floor(Math.random() * notes.length)];
+    this.sampler.triggerAttackRelease(randomNote, '2n');
   }
 }
 
