@@ -194,7 +194,7 @@ class StringObj {
       },
       baseUrl: "https://tonejs.github.io/audio/salamander/",
       release: 1,
-      onload: () => console.log('Sampler loaded')
+      // onload: () => console.log('Sampler loaded')
     }).toDestination();
 
     Tone.loaded().then(() => {
