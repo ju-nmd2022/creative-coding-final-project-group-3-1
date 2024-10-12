@@ -64,17 +64,18 @@ function draw() {
       break;
   }
 
-  switch(cursorState){
-    case "idle":
-      background(0);
-      break;
-    case "selecting":
-      background(220, 0, 0);
-      break;
-    case "creating":
-      background(20);
-      break;
-  }
+  background(0);
+  // switch(cursorState){ // change background color depending on whether we're creating, selecting, or doing nothing
+  //   case "idle":
+  //     background(0);
+  //     break;
+  //   case "selecting":
+  //     background(220, 0, 0);
+  //     break;
+  //   case "creating":
+  //     background(20);
+  //     break;
+  // }
 
   // Draw the webcam video
   //image(video, 0, 0, width, height); // let's comment this out and not draw the video hehe
@@ -173,6 +174,7 @@ class StringObj {
   constructor(x, y) {
     this.position = createVector(x, y);
     this.velocity = createVector(random(-2, 2), random(-2, 2));
+    this.direction;
     this.length = random(2000, 4000);
     this.thickness = random(4, 12);
     this.color = color(random(255), random(255), random(255));
@@ -252,10 +254,11 @@ class StringObj {
       // }
 
       if(frameCount % simulationFrameRate == simulationFrameRate - 1){
-        console.log("1 second passed of my life, and I have " + this.segments.length + " segments!");
-        
-        this.segments.shift();
+        // console.log("1 second passed of my life, and I have " + this.segments.length + " segments!");
+        this.segments.shift(); // take one segment away from the string's life
       }
+
+      this.direction = Math.atan(this.velocity.y / this.velocity.x);
     }
 
     if(dist(mouseX, mouseY, this.position.x, this.position.y) <= 20) // check if the mouse pointer is near the head
@@ -290,15 +293,16 @@ class StringObj {
     // draw the head of the string
     fill(255);
     noStroke();
-    let headRadius = this.thickness;
 
-    // if the mouse is on the head of the string, make it bigger and distinguishable
-    headRadius += this.selected == true? 10 : 0;
-    ellipse(this.segments[this.segments.length - 1].x, this.segments[this.segments.length - 1].y, headRadius);
+    // if the mouse is on the head of the string, make the eyes poppy and distinguishable
+    let eyePop = this.selected == true? 6 : 0;
     
     push();
     translate(this.segments[this.segments.length - 1].x, this.segments[this.segments.length - 1].y);
-    rotate(Math.atan(this.velocity.y / this.velocity.x));
+    if(this.velocity.x >= 0)
+      rotate(this.direction);
+    else if(this.velocity.x < 0)
+      rotate(this.direction + PI); // because Arctan always returns an angle between -PI/2 and PI/2
     // make the eyes
     ellipse(0, -10, 20);
     ellipse(0, 10, 20);
@@ -306,12 +310,12 @@ class StringObj {
     strokeWeight(1);
     stroke(255);
     fill(0);
-    ellipse(5, -10, 14);
-    ellipse(5, 10, 14);
+    ellipse(5, -10, 14 + eyePop);
+    ellipse(5, 10, 14 + eyePop);
     // make the spark in the eyes
     fill(255);
-    ellipse(0, -10, 8);
-    ellipse(0, 10, 8);
+    ellipse(0, -10, 8 + eyePop / 2);
+    ellipse(0, 10, 8 + eyePop / 2);
     pop();
   }
 
