@@ -1,3 +1,4 @@
+let simulationFrameRate = 60;
 let strings = [];
 let synth;
 let walls = [];
@@ -22,6 +23,7 @@ function preload() {
 
 function setup() {
   createCanvas(windowHeight * 4 / 3, windowHeight);
+  frameRate(simulationFrameRate);
 
   // Create the webcam video and hide it
   video = createCapture(VIDEO);
@@ -78,6 +80,11 @@ function draw() {
   //image(video, 0, 0, width, height); // let's comment this out and not draw the video hehe
 
   for (let str of strings) {
+    for(let i = 0; i < strings.length; i++){ // checking if a string's life has ended
+      if(strings[i].segments.length == 1){
+        strings.splice(i, 1);
+      }
+    }
     str.update();
     str.display();
   }
@@ -239,7 +246,14 @@ class StringObj {
       this.segments.push(this.position.copy());
       // console.log("segments: " + this.segments.length + " speed: " + this.speed + " length: " + this.length);
       
-      while (this.segments.length * this.speed > this.length) {
+      // while (this.segments.length * this.speed > this.length) {
+        this.segments.shift();
+        
+      // }
+
+      if(frameCount % simulationFrameRate == simulationFrameRate - 1){
+        console.log("1 second passed of my life, and I have " + this.segments.length + " segments!");
+        
         this.segments.shift();
       }
     }
