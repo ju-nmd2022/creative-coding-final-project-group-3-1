@@ -3,6 +3,7 @@ let synth;
 let walls = [];
 let mazePatterns = [];
 let scale;
+let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"];
 let masterVolume = 15;
 let handPose;
 let video;
@@ -170,17 +171,35 @@ class StringObj {
     this.color = color(random(255), random(255), random(255));
     this.segments = [];
     this.frozen = false;
-    this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
-    this.synth = new Tone.AMSynth({
-      envelope: {
-        attack: 0.1,
-        decay: 0.2,
-        sustain: 0.8,
-        release: 0.5
-      }
+
+    // this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
+    // this.synth = new Tone.AMSynth({
+    //   envelope: {
+    //     attack: 0.1,
+    //     decay: 0.2,
+    //     sustain: 0.8,
+    //     release: 0.5
+    //   }
+    // }).toDestination();
+    // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+    // this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+
+    this.note = random(notes);
+    this.sampler = new Tone.Sampler({
+      urls: {
+        C4: "C4.mp3",
+        D4: "Ds4.mp3",
+        F4: "Fs4.mp3",
+        A4: "A4.mp3",
+      },
+      baseUrl: "https://tonejs.github.io/audio/salamander/",
+      release: 1,
+      onload: () => console.log('Sampler loaded')
     }).toDestination();
-    this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+
+    Tone.loaded().then(() => {
+      this.sampler.triggerAttackRelease(this.note, '8n');
+    });
   }
 
   update() {
@@ -285,7 +304,10 @@ class StringObj {
   playBounceTone() {
     // this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
     // this.synth.set({ frequency: this.freq });
-    this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+
+    // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+
+    this.sampler.triggerAttackRelease(this.note, '8n');
   }
 }
 
@@ -454,10 +476,16 @@ function mousePressed() {
         strings[i].frozen = !strings[i].frozen;
         if (strings[i].frozen) {
           strings[i].velocity.set(0, 0);
-          strings[i].synth.triggerAttack(strings[i].freq);
+
+          // strings[i].synth.triggerAttack(strings[i].freq);
+
+          strings[i].sampler.triggerAttack(strings[i].note);
         } else {
           strings[i].velocity.set(random(-2, 2), random(-2, 2));
-          strings[i].synth.triggerRelease();
+
+          // strings[i].synth.triggerRelease();
+
+          strings[i].sampler.triggerRelease();
         }
         return;
       }
@@ -523,7 +551,11 @@ function keyPressed(){ // do something if a key on the keyboard is pressed
   if(keyCode === BACKSPACE){
     for(let i = 0; i < strings.length; i++){
       if(strings[i].selected == true){
-        strings[i].synth.triggerRelease(); // when removing a string, stop the sound it is making
+
+        // strings[i].synth.triggerRelease(); // when removing a string, stop the sound it is making
+
+        strings[i].sampler.triggerRelease();
+
         strings.splice(i, 1); // remove the string altogether
         cursorState = "idle";
         return;
@@ -531,6 +563,9 @@ function keyPressed(){ // do something if a key on the keyboard is pressed
     }
   }
   else if(keyCode === DELETE){ // if DELETE is pressed, remove all the strings
+    for(string of strings){
+      string.sampler.triggerRelease();
+    }
     strings.splice(0, strings.length);
   }
 }
@@ -555,7 +590,11 @@ function checkForPinch(){
         strings[i].velocity.x *= 0; // stop the horizontal movement of the string
         strings[i].velocity.y *= 0; // stop the vertical movement of the string
         // strings[i].synth.volume.value -= 10;
-        strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+
+        // strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+
+        strings[i].sampler.triggerAttack(strings[i].note);
+
         strings[i].frozen = true;
       }
     }
