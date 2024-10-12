@@ -201,7 +201,7 @@ class StringObj {
       this.sampler.triggerAttackRelease(this.note, '8n');
     });
   }
-
+    
   update() {
     this.position.add(this.velocity);
 
