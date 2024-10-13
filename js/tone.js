@@ -11,6 +11,11 @@ let video;
 let hands = [];
 let cursorState = "idle"; // could be 'idle', 'selecting', or 'creating'
 let newLine = null;
+let globalSpeed;
+let someonePinched = false;
+let pinchSelectThreshold = 200;
+let pinchThreshold = 80;
+let pinchDistanceThreshold = 80;
 
 let pinch = 0;
 
@@ -24,6 +29,8 @@ function preload() {
 function setup() {
   createCanvas(windowHeight * 4 / 3, windowHeight);
   frameRate(simulationFrameRate);
+
+  globalSpeed = random(2, 4);
 
   // Create the webcam video and hide it
   video = createCapture(VIDEO);
@@ -133,8 +140,8 @@ function drawThePinch(){
   let handsData = getHandsData();
   if(handsData != false){
     // This circle's size is controlled by a "pinch" gesture
-    fill(0, 255, 0, 200);
-    stroke(0);
+    // fill(0, 255, 0, 200);
+    stroke(255);
     strokeWeight(2);
     circle(handsData.centerX, handsData.centerY, handsData.pinch);
   }
@@ -145,7 +152,7 @@ class Line{
     this.startCoordinates = createVector(x, y);
     this.endCoordinates = createVector(x, y);
     this.velocity = createVector(0, 0);
-    this.speed = random(2, 4);
+    this.speed = globalSpeed;
     this.length = 0;
     this.thickness = random(4, 12);
     this.color = color(random(255), random(255), random(255));
@@ -212,7 +219,8 @@ class StringObj {
   }
     
   update() {
-    this.position.add(this.velocity);
+    this.velocity = this.velocity.normalize().mult(this.speed); // velocity is controlled by speed and direction
+    this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
 
     if (this.position.x < 0 || this.position.x > width) {
       this.velocity.x *= -1;
@@ -253,9 +261,12 @@ class StringObj {
         
       // }
 
-      if(frameCount % simulationFrameRate == simulationFrameRate - 1){
+      if(frameCount % simulationFrameRate == simulationFrameRate - 1){ // do this every one second that passes
         // console.log("1 second passed of my life, and I have " + this.segments.length + " segments!");
         this.segments.shift(); // take one segment away from the string's life
+        if(someonePinched){ // randomly move around in confusion if another pinchy is pinched
+          this.velocity = createVector(random(-2, 2), random(-2, 2));
+        }
       }
 
       this.direction = Math.atan(this.velocity.y / this.velocity.x);
@@ -272,10 +283,16 @@ class StringObj {
 
     let handsData = getHandsData();
     if(handsData != false){
-      if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) <= 80) && handsData.pinch <= 160)
+      if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) <= pinchDistanceThreshold) && handsData.pinch <= pinchSelectThreshold){
+        this.speed = globalSpeed *3;
         this.selected = true;
-      else
+      }        
+      else if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) < 300) && handsData.pinch <= pinchSelectThreshold)
+        this.speed = globalSpeed *2;
+      else{
+        this.speed = globalSpeed;
         this.selected = false;
+      }
     }
   }
 
@@ -499,7 +516,7 @@ function mousePressed() {
 
           strings[i].sampler.triggerAttack(strings[i].note);
         } else {
-          strings[i].velocity.set(random(-2, 2), random(-2, 2));
+          strings[i].velocity.set(random(-2, 2), random(-2, 2));   
 
           // strings[i].synth.triggerRelease();
 
@@ -604,16 +621,39 @@ function checkForPinch(){
   let handsData = getHandsData();
   if(handsData != false){
     for(let i = 0; i < strings.length; i++){
-      if(strings[i].selected == true && handsData.pinch <= 80){
-        strings[i].velocity.x *= 0; // stop the horizontal movement of the string
-        strings[i].velocity.y *= 0; // stop the vertical movement of the string
-        // strings[i].synth.volume.value -= 10;
+      if(strings[i].selected == true){
+        if(handsData.pinch <= pinchThreshold){
+          if(!strings[i].frozen){
+            strings[i].speed = 0; // when a creature is frozen, it just stands there. it doesn't do anything
+            // strings[i].synth.volume.value -= 10;
 
-        // strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+            // strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
 
-        strings[i].sampler.triggerAttack(strings[i].note);
+            strings[i].sampler.triggerAttack(strings[i].note);
+            strings[i].frozen = true;
+          }         
+          someonePinched = true;
+        }else{
+          if(strings[i].frozen){
+            strings[i].velocity.set(random(-2, 2), random(-2, 2));   
 
-        strings[i].frozen = true;
+            // strings[i].synth.triggerRelease();
+
+            strings[i].sampler.triggerRelease();
+          }
+          strings[i].frozen = false;
+          someonePinched = false;
+        }
+      }else{
+        if(strings[i].frozen){
+          strings[i].velocity.set(random(-2, 2), random(-2, 2));   
+
+          // strings[i].synth.triggerRelease();
+
+          strings[i].sampler.triggerRelease();
+          strings[i].frozen = false;
+          someonePinched = false;
+        }
       }
     }
   }
