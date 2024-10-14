@@ -39,7 +39,7 @@ function setup() {
   // Start detecting hands from the webcam video
   handPose.detectStart(video, gotHands);
 
-  background(0);
+  background(128);
   Tone.start();
   scale = Tonal.Scale.get("C3 major").notes; // get the notes of a certain scale and put in the "scale" array
   defineMazePatterns();
@@ -71,7 +71,7 @@ function draw() {
       break;
   }
 
-  background(0);
+  background(15);
   // switch(cursorState){ // change background color depending on whether we're creating, selecting, or doing nothing
   //   case "idle":
   //     background(0);
@@ -258,8 +258,7 @@ class StringObj {
           this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
         }
       }
-    }
-    
+    }    
     
     if(!this.frozen){ // move the string only if it is not frozen
       this.segments.push(this.position.copy());
@@ -360,6 +359,7 @@ class StringObj {
     this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
 
     // this.sampler.triggerAttackRelease(this.note, '8n');
+
   }
 }
 
@@ -514,10 +514,11 @@ function changeMazePattern() {
 
 function generateWalls() {
   walls = [];
-  
   let randomPattern = random(mazePatterns);
-    for (let wall of randomPattern) {
-    walls.push(wall);
+  for (let wall of randomPattern) {
+    if (wall.x1 >= 0 && wall.x1 <= width && wall.x2 >= 0 && wall.x2 <= width && wall.y1 >= 0 && wall.y1 <= height && wall.y2 >= 0 && wall.y2 <= height) {
+      walls.push(wall);
+    }
   }
 }
 
@@ -549,15 +550,14 @@ function mousePressed() {
   }
 }
 
-function mouseDragged(){
-  if(cursorState == "creating"){
+function mouseDragged() {
+  if (cursorState == "creating") {
     if (!isNearWall(mouseX, mouseY)) {
       newLine.endCoordinates.x = mouseX;
       newLine.endCoordinates.y = mouseY;
     }
   }
 }
-
 
 function mouseReleased(){
   if(cursorState == "creating"){
