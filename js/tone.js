@@ -187,6 +187,7 @@ class StringObj {
     this.color = color(random(255), random(255), random(255));
     this.segments = [];
     this.frozen = false;
+    this.scared = false;
 
     // this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
     // this.synth = new Tone.AMSynth({
@@ -219,8 +220,11 @@ class StringObj {
   }
     
   update() {
+    let handsData = getHandsData();
+
     this.velocity = this.velocity.normalize().mult(this.speed); // velocity is controlled by speed and direction
     this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
+    this.scared = someonePinched;
 
     if (this.position.x < 0 || this.position.x > width) {
       this.velocity.x *= -1;
@@ -264,7 +268,14 @@ class StringObj {
         // console.log("1 second passed of my life, and I have " + this.segments.length + " segments!");
         this.segments.shift(); // take one segment away from the string's life
         if(someonePinched){ // randomly move around in confusion if another pinchy is pinched
-          this.velocity = createVector(random(-2, 2), random(-2, 2));
+          if(handsData != false){
+            if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) < 300) && handsData.pinch <= pinchSelectThreshold){
+              this.velocity = createVector(random(-2, 2), random(-2, 2)); // move around in a random direction, cause it is scared
+              let newNote = this.note.slice(0, 1) + "" + (parseInt(this.note.slice(1, 2)) + 2);
+              // console.log("My new note is " + newNote + " :)");
+              this.sampler.triggerAttackRelease(newNote, '8n'); // make its noise but two octaves higher, cause it is stressed
+            }
+          }
         }
       }
 
@@ -280,7 +291,6 @@ class StringObj {
       this.selected = false;
     }
 
-    let handsData = getHandsData();
     if(handsData != false){
       if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) <= pinchDistanceThreshold) && handsData.pinch <= pinchSelectThreshold){
         this.speed = globalSpeed *3;
