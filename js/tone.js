@@ -2,7 +2,7 @@ let simulationFrameRate = 60; // frame rate
 let strings = []; // the pinchies stay here
 let walls = []; // the walls on the screen at any point
 let mazePatterns = []; // this is maze patters. it doesn't do anything
-//let scale; // the scale that the little pinchies choose their notes from
+//let noteScale; // the scale that the little pinchies choose their notes from
 // let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"]; // pre-coded notes for our piano sampler
 let masterVolume = 15; // master volume that controls the outputs of the entire sound system
 let handPose; // detects our hands
@@ -38,7 +38,7 @@ function setup() {
 
   background(128);
   Tone.start();
-  scale = Tonal.Scale.get("C3 major").notes; // get the notes of a certain scale and put in the "scale" array
+  noteScale = Tonal.Scale.get("C3 major").notes; // get the notes of a certain scale and put in the "noteScale" array
   defineMazePatterns();
   generateWalls();
 
@@ -177,7 +177,7 @@ class StringObj {
     this.scared = false;
     this.shape = random(['line', 'triangle', 'circle']);
 
-    this.freq = random(900, 1100); //random(scale); // random(261.63, 1046.50);//random(200, 800);  
+    this.freq = random(900, 1100); //random(noteScale); // random(261.63, 1046.50);//random(200, 800);  
     this.synth = new Tone.AMSynth({
       envelope: {
         attack: 0.5,
@@ -410,7 +410,7 @@ class StringObj {
   }
 
   playBounceTone() {
-    // this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
+    // this.freq = random(noteScale); //random(200, 800); // pick a random note from the predefined scale
     // this.synth.set({ frequency: this.freq });
 
     //this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
