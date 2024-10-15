@@ -87,7 +87,8 @@ function draw() {
   for (let str of strings) {
     for(let i = 0; i < strings.length; i++){ // checking if a string's life has ended
       if(strings[i].segments.length == 1){
-        strings.splice(i, 1);
+        strings[i].synth.triggerRelease();
+        strings.splice(i, 1);        
       }
     }
     str.update();
@@ -193,9 +194,9 @@ class StringObj {
         release: 0.5
       }
     }).toDestination();
-    //this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    //this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
-    this.synth.triggerAttack(this.freq); 
+    // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+    // this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+    this.synth.triggerAttack(this.freq);
 
     // this.note = random(notes);
     // this.sampler = new Tone.Sampler({
@@ -248,11 +249,11 @@ class StringObj {
         this.velocity.y -= 2 * dotProduct * normalY;
     
         this.playBounceTone();
-        while(((dist(this.position.x, this.position.y, wall.x1, wall.y1) + dist(this.position.x, this.position.y, wall.x2, wall.y2)) - lineLength) <= 0.4){
-          this.velocity.x -= 3 * dotProduct * normalX;
-          this.velocity.y -= 3 * dotProduct * normalY;
-          this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
-        }
+        // while(((dist(this.position.x, this.position.y, wall.x1, wall.y1) + dist(this.position.x, this.position.y, wall.x2, wall.y2)) - lineLength) <= 0.4){
+        //   this.velocity.x -= 3 * dotProduct * normalX;
+        //   this.velocity.y -= 3 * dotProduct * normalY;
+        //   this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
+        // }
       }
     }    
     
