@@ -144,10 +144,10 @@ function drawThePinch(){
   }
 }
 
-class Line{
-  constructor(x, y){
+class Line {
+  constructor(x, y) {
     this.startCoordinates = createVector(x, y);
-    this.endCoordinates = createVector(x, y);
+    this.endCoordinates = createVector(x, y);  // Represents the head of the line
     this.velocity = createVector(0, 0);
     this.speed = globalSpeed;
     this.length = 0;
@@ -157,20 +157,17 @@ class Line{
   }
 
   display() {
+    // Draw the line itself
     stroke(this.color);
     strokeWeight(this.thickness);
     noFill();
-    
-    // draw the line
     line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
 
-    // draw the head of the new line
-    fill(255);
-    noStroke();
-    let headRadius = this.thickness + 5;
-
-    // make the head of the new line bigger and distinguishable
-    ellipse(this.endCoordinates.x, this.endCoordinates.y, headRadius);
+    // Draw the head of the moving line as a circle
+    fill(255);  // Set fill color to white for the head
+    noStroke();  // No stroke for the circle head
+    let headRadius = this.thickness + 5;  // Adjust the size of the head based on the line thickness
+    ellipse(this.endCoordinates.x, this.endCoordinates.y, headRadius);  // Draw the circle at the front (head)
   }
 }
 
@@ -185,8 +182,9 @@ class StringObj {
     this.segments = [];
     this.frozen = false;
     this.scared = false;
+    this.shape = random(['line', 'triangle', 'circle']);
 
-    this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
+    this.freq = random(scale);//random(200, 800);  // pick a random note from the predefined scale
     this.synth = new Tone.AMSynth({
       envelope: {
         attack: 0.1,
@@ -195,8 +193,9 @@ class StringObj {
         release: 0.5
       }
     }).toDestination();
-    this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+    //this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+    //this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+    this.synth.triggerAttack(this.freq); 
 
     // this.note = random(notes);
     // this.sampler = new Tone.Sampler({
@@ -319,11 +318,60 @@ class StringObj {
       curveVertex(segment.x, segment.y);
     }
     endShape();
-
+  
+    // Draw the shape
+    fill(this.color);
+    let x = this.segments[this.segments.length - 1].x;
+    let y = this.segments[this.segments.length - 1].y;
+    let angle = this.direction;
+    
+    push();
+    translate(x, y);
+    rotate(angle);
+    
+    if (this.shape === 'line') {
+      // Draw a line
+      line(0, 0, 20, 0);
+    } else if (this.shape === 'triangle') {
+      // Draw a triangle
+      let triangleSize = 20;
+      triangle(0, -triangleSize / 2, 20, 0, 0, triangleSize / 2);
+    } else if (this.shape === 'circle') {
+      // Draw a circle
+      let circleSize = 20;
+      ellipse(10, 0, circleSize, circleSize);
+    } else if (this.shape === 'square') {
+      // Draw a square
+      let squareSize = 20;
+      rect(-squareSize / 2, -squareSize / 2, squareSize, squareSize);
+    } else if (this.shape === 'pentagon') {
+      // Draw a pentagon
+      let pentagonSize = 20;
+      beginShape();
+      for (let i = 0; i < 5; i++) {
+        let px = cos(i * PI / 2.5) * pentagonSize;
+        let py = sin(i * PI / 2.5) * pentagonSize;
+        vertex(px, py);
+      }
+      endShape(CLOSE);
+    } else if (this.shape === 'hexagon') {
+      // Draw a hexagon
+      let hexagonSize = 20;
+      beginShape();
+      for (let i = 0; i < 6; i++) {
+        let px = cos(i * PI / 3) * hexagonSize;
+        let py = sin(i * PI / 3) * hexagonSize;
+        vertex(px, py);
+      }
+      endShape(CLOSE);
+    }
+    
+    pop();
+  
     // draw the head of the string
     fill(255);
     noStroke();
-
+  
     // if the mouse is on the head of the string, make the eyes poppy and distinguishable
     let eyePop = this.selected == true? 6 : 0;
     
@@ -353,9 +401,10 @@ class StringObj {
     // this.freq = random(scale); //random(200, 800); // pick a random note from the predefined scale
     // this.synth.set({ frequency: this.freq });
 
-    this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-
-    // this.sampler.triggerAttackRelease(this.note, '8n');
+    //this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
+    this.freq = random(200, 800);
+    this.synth.set({ frequency: this.freq });
+    // this.sampler.triggerAttack Release(this.note, '8n');
 
   }
 }
