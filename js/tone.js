@@ -50,8 +50,8 @@ function setup() {
 function draw() {
   let isSelecting = false;
 
-  for(str of strings){
-    isSelecting |= str.selected;
+  for(string of strings){
+    isSelecting |= string.selected;
   }
   switch(cursorState){
     case "idle":
@@ -69,6 +69,8 @@ function draw() {
   }
 
   background(15);
+  
+  ////////////////////////////////////////////////////////////// DEBUGGING cursor state based on SELECTION or CREATION
   // switch(cursorState){ // change background color depending on whether we're creating, selecting, or doing nothing
   //   case "idle":
   //     background(0);
@@ -80,19 +82,20 @@ function draw() {
   //     background(20);
   //     break;
   // }
+  ////////////////////////////////////////////////////////////// DEBUGGING cursor state based on SELECTION or CREATION
 
   // Draw the webcam video
   //image(video, 0, 0, width, height); // let's comment this out and not draw the video hehe
 
-  for (let str of strings) {
+  for (let string of strings) {
     for(let i = 0; i < strings.length; i++){ // checking if a string's life has ended
       if(strings[i].segments.length == 1){
         strings[i].synth.triggerRelease();
         strings.splice(i, 1);        
       }
     }
-    str.update();
-    str.display();
+    string.update();
+    string.display();
   }
 
   if(newLine != null){
@@ -196,8 +199,9 @@ class StringObj {
     }).toDestination();
     // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
     // this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
-    this.synth.triggerAttack(this.freq);
+    this.synth.triggerAttack(this.freq); // play sound indefinitely
 
+    ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
     // this.note = random(notes);
     // this.sampler = new Tone.Sampler({
     //   urls: {
@@ -214,6 +218,7 @@ class StringObj {
     // Tone.loaded().then(() => {
     //   this.sampler.triggerAttackRelease(this.note, '8n');
     // });
+    ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
   }
     
   update() {
@@ -583,7 +588,7 @@ function mousePressed() {
         } else {
           strings[i].velocity.set(random(-2, 2), random(-2, 2));   
           strings[i].synth.volume.value = 1;
-          strings[i].synth.triggerRelease();
+          // strings[i].synth.triggerRelease();
 
           // strings[i].sampler.triggerRelease();
         }
@@ -702,7 +707,7 @@ function checkForPinch(){
           if(strings[i].frozen){
             strings[i].velocity.set(random(-2, 2), random(-2, 2));   
 
-            strings[i].synth.triggerRelease();
+            // strings[i].synth.triggerRelease();
             strings[i].synth.volume.value = 1;
             // strings[i].sampler.triggerRelease();
           }
@@ -713,7 +718,7 @@ function checkForPinch(){
         if(strings[i].frozen){
           strings[i].velocity.set(random(-2, 2), random(-2, 2));   
 
-          strings[i].synth.triggerRelease();
+          // strings[i].synth.triggerRelease();
           strings[i].synth.volume.value = 1;
           // strings[i].sampler.triggerRelease();
           strings[i].frozen = false;
