@@ -1,23 +1,20 @@
-let simulationFrameRate = 60;
-let strings = [];
-let synth;
-let walls = [];
-let mazePatterns = [];
-let scale;
-// let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"];
-let masterVolume = 15;
-let handPose;
-let video;
-let hands = [];
+let simulationFrameRate = 60; // frame rate
+let strings = []; // the pinchies stay here
+let walls = []; // the walls on the screen at any point
+let mazePatterns = []; // this is maze patters. it doesn't do anything
+let scale; // the scale that the little pinchies choose their notes from
+// let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"]; // pre-coded notes for our piano sampler
+let masterVolume = 15; // master volume that controls the outputs of the entire sound system
+let handPose; // detects our hands
+let video; // video output from handPose
+let hands = []; // our detected fingers
 let cursorState = "idle"; // could be 'idle', 'selecting', or 'creating'
-let newLine = null;
-let globalSpeed;
-let someonePinched = false;
-let pinchSelectThreshold = 200;
-let pinchThreshold = 80;
-let pinchDistanceThreshold = 80;
-
-let pinch = 0;
+let newLine = null; // when dragging the mouse to create a new line, we need this
+let globalSpeed; // the default speed of a pinchy
+let someonePinched = false; // the simulation detects if a pinchy is pinched and it tells the others
+let pinchSelectThreshold = 200; // how tigh our pinch is to be considered a selection
+let pinchThreshold = 80; // how tigh should our pinch be to actually hold a pinchy in place
+let pinchDistanceThreshold = 80; // how far should our pinch be to affect a pinchy
 
 function preload() {
   // Load the handPose model
