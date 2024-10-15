@@ -49,6 +49,9 @@ function setup() {
 
 function draw() {
   let isSelecting = false;
+  let handsData = getHandsData();
+
+  background(15);
 
   for(string of strings){
     isSelecting |= string.selected;
@@ -65,10 +68,11 @@ function draw() {
       }
       break;
     case "creating":
+      if(newLine != null){
+        newLine.display();
+      }
       break;
   }
-
-  background(15);
   
   ////////////////////////////////////////////////////////////// DEBUGGING cursor state based on SELECTION or CREATION
   // switch(cursorState){ // change background color depending on whether we're creating, selecting, or doing nothing
@@ -94,14 +98,11 @@ function draw() {
         strings.splice(i, 1);        
       }
     }
-    string.update();
+    string.update(handsData);
     string.display();
   }
 
-  if(newLine != null){
-    newLine.display();
-  }
-
+  // draw the walls
   stroke(255, 0, 150); 
   strokeWeight(5);
   noFill();
@@ -110,8 +111,7 @@ function draw() {
     line(wall.x1, wall.y1, wall.x2, wall.y2);
   }
 
-  drawThePinch();
-  checkForPinch();
+  checkForPinch(handsData);
 }
 
 function getHandsData(){
@@ -134,17 +134,6 @@ function getHandsData(){
     }
   }else{
     return false;
-  }
-}
-
-function drawThePinch(){
-  let handsData = getHandsData();
-  if(handsData != false){
-    // This circle's size is controlled by a "pinch" gesture
-    // fill(0, 255, 0, 200);
-    stroke(255);
-    strokeWeight(2);
-    circle(handsData.centerX, handsData.centerY, handsData.pinch);
   }
 }
 
@@ -198,7 +187,7 @@ class StringObj {
       }
     }).toDestination();
     // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    // this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
     this.synth.triggerAttack(this.freq); // play sound indefinitely
 
     ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
@@ -221,9 +210,7 @@ class StringObj {
     ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
   }
     
-  update() {
-    let handsData = getHandsData();
-
+  update(data) {
     this.velocity = this.velocity.normalize().mult(this.speed); // velocity is controlled by speed and direction
     this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
     this.scared = someonePinched;
@@ -242,23 +229,39 @@ class StringObj {
 
     for (let wall of walls) {
       let lineLength = dist(wall.x1, wall.y1, wall.x2, wall.y2);
-      let distanceFromWall = dist(this.position.x, this.position.y, wall.x1, wall.y1) + dist(this.position.x, this.position.y, wall.x2, wall.y2);
-    
-      if ((distanceFromWall - lineLength) <= 0.4) {
-        let normalX = (wall.y2 - wall.y1) / lineLength;
-        let normalY = (wall.x1 - wall.x2) / lineLength;
-        
-        let dotProduct = this.velocity.x * normalX + this.velocity.y * normalY;
-        
-        this.velocity.x -= 2 * dotProduct * normalX;
-        this.velocity.y -= 2 * dotProduct * normalY;
-    
-        this.playBounceTone();
-        // while(((dist(this.position.x, this.position.y, wall.x1, wall.y1) + dist(this.position.x, this.position.y, wall.x2, wall.y2)) - lineLength) <= 0.4){
-        //   this.velocity.x -= 3 * dotProduct * normalX;
-        //   this.velocity.y -= 3 * dotProduct * normalY;
-        //   this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
+      let nextPosition = this.position.copy().add(this.velocity);
+
+      if (intersects(this.position.x, this.position.y, nextPosition.x, nextPosition.y, wall.x1, wall.y1, wall.x2, wall.y2)) { // original content of the conditional: (distanceFromWall - lineLength) <= 0.2
+        // let lineXVector = wall.x2 - wall.x1;
+        // let lineYVector = wall.y2 - wall.y1;
+        // let theDotProduct = lineXVector * this.velocity.x + lineYVector * this.velocity.y;
+        // let lineMagnitude = Math.sqrt(Math.pow(lineXVector, 2) + Math.pow(lineYVector, 2));
+        // let velocityMagnitude = Math.sqrt(Math.pow(this.velocity.x, 2) + Math.pow(this.velocity.y, 2));
+
+        // console.log(" lineX" + lineXVector);
+        // console.log(" lineY" + lineYVector);
+        // console.log(" dot product" + theDotProduct);
+        // console.log(" line magnitude" + lineMagnitude);
+        // console.log(" velocity magnitude" + velocityMagnitude);
+
+        // let angle = Math.acos(theDotProduct / (lineMagnitude * velocityMagnitude));
+        // let angleMagnitude = Math.abs((angle * 180) / PI);
+
+        // if(angleMagnitude % 180 == 0){
+        //   this.velocity.x = -this.velocity.x;
+        //   this.velocity.y = -this.velocity.y;
         // }
+        // else{
+          let normalX = (wall.y2 - wall.y1) / lineLength;
+          let normalY = (wall.x1 - wall.x2) / lineLength;
+          
+          let dotProduct = this.velocity.x * normalX + this.velocity.y * normalY;
+          
+          this.velocity.x -= 2 * dotProduct * normalX;
+          this.velocity.y -= 2 * dotProduct * normalY;
+        // }
+
+        this.playBounceTone();
       }
     }    
     
@@ -275,14 +278,14 @@ class StringObj {
         // console.log("1 second passed of my life, and I have " + this.segments.length + " segments!");
         this.segments.shift(); // take one segment away from the string's life
         if(someonePinched){ // randomly move around in confusion if another pinchy is pinched
-          if(handsData != false){
-            if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) < 300) && handsData.pinch <= pinchSelectThreshold){
+          if(data != false){
+            if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold){
               this.velocity = createVector(random(-2, 2), random(-2, 2)); // move around in a random direction, cause it is scared
-              let newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
+              // let newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
 
-              console.log("My new note is " + newNote + " :)");
+              // console.log("My new note is " + newNote + " :)");
               // this.sampler.triggerAttackRelease(newNote, '8n'); // make its noise but an octave higher, cause it is stressed
-              this.synth.triggerAttackRelease(newNote, "8n");
+              this.synth.triggerAttack(this.freq * 2);
             }
           }
         }
@@ -300,12 +303,12 @@ class StringObj {
       this.selected = false;
     }
 
-    if(handsData != false){
-      if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) <= pinchDistanceThreshold) && handsData.pinch <= pinchSelectThreshold){
+    if(data != false){
+      if((dist(data.centerX, data.centerY, this.position.x, this.position.y) <= pinchDistanceThreshold) && data.pinch <= pinchSelectThreshold){
         this.speed = globalSpeed *3;
         this.selected = true;
       }        
-      else if((dist(handsData.centerX, handsData.centerY, this.position.x, this.position.y) < 300) && handsData.pinch <= pinchSelectThreshold)
+      else if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold)
         this.speed = globalSpeed *2;
       else{
         this.speed = globalSpeed;
@@ -329,11 +332,14 @@ class StringObj {
     fill(this.color);
     let x = this.segments[this.segments.length - 1].x;
     let y = this.segments[this.segments.length - 1].y;
-    let angle = this.direction;
     
     push();
+
     translate(x, y);
-    rotate(angle);
+    if(this.velocity.x >= 0)
+      rotate(this.direction + PI);
+    else if(this.velocity.x < 0)
+      rotate(this.direction);
     
     if (this.shape === 'line') {
       // Draw a line
@@ -687,12 +693,17 @@ function isNearWall(x, y) {
   return false;
 }
 
-function checkForPinch(){
-  let handsData = getHandsData();
-  if(handsData != false){
+function checkForPinch(data){
+  if(data != false){
+    // draw the effective pinch area
+    stroke(255);
+    strokeWeight(2);
+    circle(data.centerX, data.centerY, data.pinch);
+
+    // check if a pinchy is inside the pinch area
     for(let i = 0; i < strings.length; i++){
       if(strings[i].selected == true){
-        if(handsData.pinch <= pinchThreshold){
+        if(data.pinch <= pinchThreshold){
           if(!strings[i].frozen){
             strings[i].speed = 0; // when a creature is frozen, it just stands there. it doesn't do anything
             strings[i].synth.volume.value -= 10;
@@ -734,3 +745,16 @@ function gotHands(results) {
   // Save the output to the hands variable
   hands = results;
 }
+
+// returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
+function intersects(a,b,c,d,p,q,r,s) {
+  var det, gamma, lambda;
+  det = (c - a) * (s - q) - (r - p) * (d - b);
+  if (det === 0) {
+    return false;
+  } else {
+    lambda = ((s - q) * (r - a) + (p - r) * (s - b)) / det;
+    gamma = ((b - d) * (r - a) + (c - a) * (s - b)) / det;
+    return (0 < lambda && lambda < 1) && (0 < gamma && gamma < 1);
+  }
+};
