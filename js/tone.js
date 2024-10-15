@@ -2,7 +2,7 @@ let simulationFrameRate = 60; // frame rate
 let strings = []; // the pinchies stay here
 let walls = []; // the walls on the screen at any point
 let mazePatterns = []; // this is maze patters. it doesn't do anything
-let scale; // the scale that the little pinchies choose their notes from
+//let scale; // the scale that the little pinchies choose their notes from
 // let notes = ["C3", "D3", "E3", "F3", "G3", "A3", "B3", "C4"]; // pre-coded notes for our piano sampler
 let masterVolume = 15; // master volume that controls the outputs of the entire sound system
 let handPose; // detects our hands
@@ -177,19 +177,19 @@ class StringObj {
     this.scared = false;
     this.shape = random(['line', 'triangle', 'circle']);
 
-    this.freq = random(scale);//random(200, 800);  // pick a random note from the predefined scale
+    this.freq = random(900, 1100); //random(scale); // random(261.63, 1046.50);//random(200, 800);  
     this.synth = new Tone.AMSynth({
       envelope: {
-        attack: 0.1,
+        attack: 0.5,
         decay: 0.2,
         sustain: 0.8,
-        release: 0.5
+        release: 1.5
       }
     }).toDestination();
     // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
     this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
     this.synth.triggerAttack(this.freq); // play sound indefinitely
-
+    //this.synth.oscillator.type = "sawtooth"; 
     ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
     // this.note = random(notes);
     // this.sampler = new Tone.Sampler({
@@ -686,7 +686,7 @@ function isNearWall(x, y) {
     let wallLength = dist(wall.x1, wall.y1, wall.x2, wall.y2);
     let distanceFromWall = dist(x, y, wall.x1, wall.y1) + dist(x, y, wall.x2, wall.y2);
     
-    if (Math.abs(distanceFromWall - wallLength) < 10) {
+    if (Math.abs(distanceFromWall - wallLength) < 2) {
       return true;
     }
   }
