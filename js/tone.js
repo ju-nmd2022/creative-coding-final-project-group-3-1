@@ -13,7 +13,7 @@ let newLine = null; // when dragging the mouse to create a new line, we need thi
 let globalSpeed; // the default speed of a pinchy
 let someonePinched = false; // the simulation detects if a pinchy is pinched and it tells the others
 let pinchSelectThreshold = 200; // how tigh our pinch is to be considered a selection
-let pinchThreshold = 80; // how tigh should our pinch be to actually hold a pinchy in place
+let pinchThreshold = 80; // how tight should our pinch be to actually hold a pinchy in place
 let pinchDistanceThreshold = 80; // how far should our pinch be to affect a pinchy
 let pinchyCharacters = ["active", "social", "avoidant", "depressed", "bratty"]; // when a pinchy is born, it assumes a character
 let pinchyFeelings = ["scared", "happy", "nervous", "sad", "lonely", "loved"]; // pinchies have different feelings in reaction to events
@@ -734,12 +734,17 @@ function checkForPinch(data){
         else{ // drag and move the pinchy around the screen
           for(string of strings){
             if(string.frozen){
+              // calculate the difference of the pinch position and the head of the pinchy that's being dragged
               let deltaX = data.centerX - string.position.x;
               let deltaY = data.centerY - string.position.y;
+
+              // the head of the pinchy should always be right under our pinch while dragging, updating its position too
               string.position.x = data.centerX;
               string.position.y = data.centerY;
               string.segments[string.segments.length - 1].x = data.centerX;
               string.segments[string.segments.length - 1].y = data.centerY;
+
+              // move all the segments of that pinchy too, relative to the new position
               for(let i = 0; i < string.segments.length - 1; i++){
                 string.segments[i].x += deltaX;
                 string.segments[i].y += deltaY;
