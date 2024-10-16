@@ -10,13 +10,12 @@ let video; // video output from handPose
 let hands = []; // our detected fingers
 let cursorState = "idle"; // could be 'idle', 'selecting', or 'creating'
 let newLine = null; // when dragging the mouse to create a new line, we need this
-let globalSpeed; // the default speed of a pinchy
 let someonePinched = false; // the simulation detects if a pinchy is pinched and it tells the others
 let pinchSelectThreshold = 200; // how tigh our pinch is to be considered a selection
 let pinchThreshold = 80; // how tight should our pinch be to actually hold a pinchy in place
 let pinchDistanceThreshold = 80; // how far should our pinch be to affect a pinchy
-let pinchyCharacters = ["active", "social", "avoidant", "depressed", "bratty"]; // when a pinchy is born, it assumes a character
-let pinchyFeelings = ["scared", "happy", "nervous", "sad", "lonely", "loved"]; // pinchies have different feelings in reaction to events
+let pinchyPersonalities = ["active", "depressed"/*, "social", "avoidant", "bratty"*/]; // when a pinchy is born, it assumes a character
+// let pinchyFeelings = ["scared", "happy", "sad"/*, "nervous", "lonely", "loved"*/]; // pinchies have different feelings in reaction to events
 
 function preload() {
   // Load the handPose model
@@ -28,8 +27,6 @@ function preload() {
 function setup() {
   createCanvas(windowHeight * 4 / 3, windowHeight);
   frameRate(simulationFrameRate);
-
-  globalSpeed = random(2, 4);
 
   // Create the webcam video and hide it
   video = createCapture(VIDEO);
@@ -141,19 +138,28 @@ function getHandsData(){
 
 class Line {
   constructor(x, y) {
+    this.personality = random(pinchyPersonalities);
     this.startCoordinates = createVector(x, y);
     this.endCoordinates = createVector(x, y);  // Represents the head of the line
     this.velocity = createVector(0, 0); // will be calculated and reassigned later
-    this.speed = globalSpeed; // every line has the same base speed at the start
+    switch (this.personality){
+      case "active":
+        this.color = color(255, 178, 51);
+        this.speed = random(4, 6);
+        break;
+      case "depressed":
+        this.color = color(105, 48, 227);
+        this.speed = random(0, 1);
+        break;
+    }
     this.length = 0;
     this.thickness = random(4, 12);
-    this.color = color(220); // lines are colorless before they are born into pinchies
     this.segments = []; // we will calculate segments after an initial direction is determined
   }
 
   display() {
     // Draw the line itself
-    stroke(this.color);
+    stroke(220); // lines are colorless before they are born into pinchies
     strokeWeight(this.thickness);
     noFill();
     line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
@@ -168,16 +174,17 @@ class Line {
 
 class StringObj {
   constructor(x, y) {
+    this.personality = random(pinchyPersonalities);
+    this.feeling = "happy";
     this.position = createVector(x, y);
     this.velocity = createVector(random(-2, 2), random(-2, 2));
     this.direction;
+    this.horizontalDirection; // TRUE = positive, FALSE = negative
     this.length = random(2000, 4000);
     this.thickness = random(4, 12);
-    this.color = color(random(255), random(255), random(255));
     this.segments = [];
     this.frozen = false;
     this.shape = random(['line', 'triangle', 'circle']);
-
     this.freq = random(900, 1100); //random(noteScale); // random(261.63, 1046.50);//random(200, 800);  
     this.synth = new Tone.AMSynth({
       envelope: {
@@ -292,6 +299,7 @@ class StringObj {
       }
 
       this.direction = Math.atan(this.velocity.y / this.velocity.x);
+      this.horizontalDirection = this.velocity.x > 0 ? true : false;
     }
 
     if(dist(mouseX, mouseY, this.position.x, this.position.y) <= 20) // check if the mouse pointer is near the head
@@ -305,13 +313,19 @@ class StringObj {
 
     if(data != false){
       if((dist(data.centerX, data.centerY, this.position.x, this.position.y) <= pinchDistanceThreshold) && data.pinch <= pinchSelectThreshold){
-        this.speed = globalSpeed *3;
+        this.speed = this.baseSpeed *3;
         this.selected = true;
+        this.feeling = "scared";
+        if(this.frozen)
+          this.feeling = "sad";
       }        
-      else if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold)
-        this.speed = globalSpeed *2;
+      else if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold){
+        this.speed = this.baseSpeed *2;
+        this.feeling = "scared";
+      }
       else{
-        this.speed = globalSpeed;
+        this.speed = this.baseSpeed;
+        this.feeling = "happy";
         this.selected = false;
       }
     }
@@ -341,9 +355,9 @@ class StringObj {
     push();
 
     translate(x, y);
-    if(this.velocity.x >= 0)
+    if(this.horizontalDirection)
       rotate(this.direction + PI);
-    else if(this.velocity.x < 0)
+    else
       rotate(this.direction);
     
     if (this.shape === 'line') {
@@ -394,13 +408,26 @@ class StringObj {
     
     push();
     translate(this.segments[this.segments.length - 1].x, this.segments[this.segments.length - 1].y);
-    if(this.velocity.x >= 0)
+    if(this.horizontalDirection)
       rotate(this.direction);
-    else if(this.velocity.x < 0)
+    else
       rotate(this.direction + PI); // because Arctan always returns an angle between -PI/2 and PI/2
     // make the eyes
     ellipse(0, -10, 20);
     ellipse(0, 10, 20);
+    switch (this.feeling){
+      case "happy":
+        fill(242, 249, 26);
+        break;
+      case "sad":
+        fill(26, 172, 249);
+        break;
+      case "scared":
+        fill(249, 26, 26);
+        break;
+    }
+    ellipse(0, -10, 17);
+    ellipse(0, 10, 17);
     // make the black of the eyes
     strokeWeight(1);
     stroke(255);
@@ -649,7 +676,9 @@ function mouseReleased(){
 
     let newString = new StringObj(newLine.endCoordinates.x, newLine.endCoordinates.y);
     newString.velocity = newLine.velocity;
-    newString.speed = newLine.speed;
+    newString.baseSpeed = newLine.speed;
+    newString.speed = newString.baseSpeed;
+    newString.color = newLine.color;
     newString.length = newLine.length;
     newString.thickness = newLine.thickness;
     newString.segments = newLine.segments;
@@ -717,6 +746,7 @@ function checkForPinch(data){
   
               // strings[i].sampler.triggerAttack(strings[i].note);
               strings[i].frozen = true;
+              strings[i].feeling = "sad";
             }         
             someonePinched = true;
           }else{
@@ -728,6 +758,7 @@ function checkForPinch(data){
               // strings[i].sampler.triggerRelease();
             }
             strings[i].frozen = false;
+            strings[i].feeling = "happy";
             someonePinched = false;
           }
         }
@@ -760,6 +791,7 @@ function checkForPinch(data){
           strings[i].synth.volume.value = 1;
           // strings[i].sampler.triggerRelease();
           strings[i].frozen = false;
+          strings[i].feeling = "happy";
           someonePinched = false;
         }
       }
