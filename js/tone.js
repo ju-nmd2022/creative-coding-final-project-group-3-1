@@ -332,7 +332,17 @@ class StringObj {
   }
 
   display() {
-    stroke(this.color);
+    switch (this.feeling){
+      case "happy":
+        stroke(this.color);
+        break;
+      case "sad":
+        stroke(26, 172, 249);
+        break;
+      case "scared":
+        stroke(this.color);
+        break;
+    }
     strokeWeight(this.thickness);
     noFill();
     beginShape();
@@ -348,7 +358,17 @@ class StringObj {
     endShape();
   
     // Draw the shape
-    fill(this.color);
+    switch (this.feeling){
+      case "happy":
+        fill(this.color);
+        break;
+      case "sad":
+        fill(26, 172, 249);
+        break;
+      case "scared":
+        fill(this.color);
+        break;
+    }
     let x = this.segments[this.segments.length - 1].x;
     let y = this.segments[this.segments.length - 1].y;
     
