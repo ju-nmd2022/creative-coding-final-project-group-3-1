@@ -15,6 +15,8 @@ let someonePinched = false; // the simulation detects if a pinchy is pinched and
 let pinchSelectThreshold = 200; // how tigh our pinch is to be considered a selection
 let pinchThreshold = 80; // how tigh should our pinch be to actually hold a pinchy in place
 let pinchDistanceThreshold = 80; // how far should our pinch be to affect a pinchy
+let pinchyCharacters = ["active", "social", "avoidant", "depressed", "bratty"]; // when a pinchy is born, it assumes a character
+let pinchyFeelings = ["scared", "happy", "nervous", "sad", "lonely", "loved"]; // pinchies have different feelings in reaction to events
 
 function preload() {
   // Load the handPose model
@@ -141,12 +143,12 @@ class Line {
   constructor(x, y) {
     this.startCoordinates = createVector(x, y);
     this.endCoordinates = createVector(x, y);  // Represents the head of the line
-    this.velocity = createVector(0, 0);
-    this.speed = globalSpeed;
+    this.velocity = createVector(0, 0); // will be calculated and reassigned later
+    this.speed = globalSpeed; // every line has the same base speed at the start
     this.length = 0;
     this.thickness = random(4, 12);
-    this.color = color(random(255), random(255), random(255));
-    this.segments = [];
+    this.color = color(220); // lines are colorless before they are born into pinchies
+    this.segments = []; // we will calculate segments after an initial direction is determined
   }
 
   display() {
@@ -156,7 +158,7 @@ class Line {
     noFill();
     line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
 
-    // Draw the head of the moving line as a circle
+    // Draw the head of the line as a circle
     fill(255);  // Set fill color to white for the head
     noStroke();  // No stroke for the circle head
     let headRadius = this.thickness + 5;  // Adjust the size of the head based on the line thickness
@@ -174,7 +176,6 @@ class StringObj {
     this.color = color(random(255), random(255), random(255));
     this.segments = [];
     this.frozen = false;
-    this.scared = false;
     this.shape = random(['line', 'triangle', 'circle']);
 
     this.freq = random(900, 1100); //random(noteScale); // random(261.63, 1046.50);//random(200, 800);  
@@ -187,9 +188,9 @@ class StringObj {
       }
     }).toDestination();
     // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
+    this.synth.oscillator.type = "sawtooth"; // changing the synthesizer's oscillator type
     this.synth.triggerAttack(this.freq); // play sound indefinitely
-    //this.synth.oscillator.type = "sawtooth"; 
+    
     ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
     // this.note = random(notes);
     // this.sampler = new Tone.Sampler({
@@ -213,7 +214,6 @@ class StringObj {
   update(data) {
     this.velocity = this.velocity.normalize().mult(this.speed); // velocity is controlled by speed and direction
     this.position.add(this.velocity); // the head crawls to the new position based on creature's velocity
-    this.scared = someonePinched;
 
     if (this.position.x < 0 || this.position.x > width) {
       this.velocity.x *= -1;
@@ -324,6 +324,11 @@ class StringObj {
     beginShape();
     for (let i = 0; i < this.segments.length; i++) {
       let segment = this.segments[i];
+
+      // these use Perlin noise and make the bodies of the pinchies look creepy. might become useful later
+      // let masterfullyCraftedX = segment.x + noise(segment.x) * 10 * (i % 2) * Math.round(random(-1, 1));
+      // let masterfullyCraftedY = segment.y + noise(segment.y) * 10 * (i % 2) * Math.round(random(-1, 1));
+
       curveVertex(segment.x, segment.y);
     }
     endShape();
@@ -647,7 +652,6 @@ function mouseReleased(){
     newString.speed = newLine.speed;
     newString.length = newLine.length;
     newString.thickness = newLine.thickness;
-    newString.color = newLine.color;
     newString.segments = newLine.segments;
     strings.push(newString);
 
@@ -703,32 +707,50 @@ function checkForPinch(data){
     // check if a pinchy is inside the pinch area
     for(let i = 0; i < strings.length; i++){
       if(strings[i].selected == true){
-        if(data.pinch <= pinchThreshold){
-          if(!strings[i].frozen){
-            strings[i].speed = 0; // when a creature is frozen, it just stands there. it doesn't do anything
-            strings[i].synth.volume.value -= 10;
-
-            strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
-
-            // strings[i].sampler.triggerAttack(strings[i].note);
-            strings[i].frozen = true;
-          }         
-          someonePinched = true;
-        }else{
-          if(strings[i].frozen){
-            strings[i].velocity.set(random(-2, 2), random(-2, 2));   
-
-            // strings[i].synth.triggerRelease();
-            strings[i].synth.volume.value = 1;
-            // strings[i].sampler.triggerRelease();
+        if(!someonePinched){
+          if(data.pinch <= pinchThreshold){ // if a pinchy is under the pinch
+            if(!strings[i].frozen){
+              strings[i].speed = 0; // when a creature is frozen, it just stands there. it doesn't do anything
+              strings[i].synth.volume.value -= 10;
+  
+              strings[i].synth.triggerAttack(strings[i].freq); // when frozen, a string makes sound permanently
+  
+              // strings[i].sampler.triggerAttack(strings[i].note);
+              strings[i].frozen = true;
+            }         
+            someonePinched = true;
+          }else{
+            if(strings[i].frozen){ // frozen pinchies that are not pinched anymore, should unfreeze
+              strings[i].velocity.set(random(-2, 2), random(-2, 2));   
+  
+              // strings[i].synth.triggerRelease();
+              strings[i].synth.volume.value = 1;
+              // strings[i].sampler.triggerRelease();
+            }
+            strings[i].frozen = false;
+            someonePinched = false;
           }
-          strings[i].frozen = false;
-          someonePinched = false;
+        }
+        else{ // drag and move the pinchy around the screen
+          for(string of strings){
+            if(string.frozen){
+              let deltaX = data.centerX - string.position.x;
+              let deltaY = data.centerY - string.position.y;
+              string.position.x = data.centerX;
+              string.position.y = data.centerY;
+              string.segments[string.segments.length - 1].x = data.centerX;
+              string.segments[string.segments.length - 1].y = data.centerY;
+              for(let i = 0; i < string.segments.length - 1; i++){
+                string.segments[i].x += deltaX;
+                string.segments[i].y += deltaY;
+              }
+            }
+          }
         }
       }else{
-        if(strings[i].frozen){
-          strings[i].velocity.set(random(-2, 2), random(-2, 2));   
-
+        if(strings[i].frozen){ // pinchies that are not selected anymore, should not remain frozen
+          strings[i].velocity.set(random(-2, 2), random(-2, 2));
+          
           // strings[i].synth.triggerRelease();
           strings[i].synth.volume.value = 1;
           // strings[i].sampler.triggerRelease();
@@ -746,6 +768,9 @@ function gotHands(results) {
   hands = results;
 }
 
+/* Credit Dan Fox @ stackOverflow
+https://stackoverflow.com/questions/9043805/test-if-two-lines-intersect-javascript-function/24392281#24392281
+*/
 // returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
 function intersects(a,b,c,d,p,q,r,s) {
   var det, gamma, lambda;
