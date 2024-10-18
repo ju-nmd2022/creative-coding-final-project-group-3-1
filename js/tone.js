@@ -188,14 +188,14 @@ class StringObj {
     this.freq = random(noteScale); // this.freq = random(900, 1100); // random(261.63, 1046.50);//random(200, 800);
     this.synth = new Tone.AMSynth({
       envelope: {
-        attack: 0.5,
-        decay: 0.2,
-        sustain: 0.8,
-        release: 1.5
+        attack: 0.05,
+        decay: 0.3,
+        sustain: 0.5,
+        release: 0.8
       }
     }).toDestination();
     // this.synth.triggerAttackRelease(this.freq, "8n"); // play the note only for an 8th note
-    this.synth.oscillator.type = "sawtooth"; // changing the synthesizer's oscillator type
+    this.synth.oscillator.type = "sine"; // changing the synthesizer's oscillator type
     this.synth.triggerAttack(this.freq); // play sound indefinitely
     
     ////////////////////////////////////////////////////////////// SAMPLER for PIANO NOTES
