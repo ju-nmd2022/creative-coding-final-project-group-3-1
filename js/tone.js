@@ -1,3 +1,14 @@
+/* Credits 
+ML5 @ P5JS official web editor for efficient pinch detection
+https://editor.p5js.org/ml5/sketches/DNbSiIYKB
+
+Dan Fox @ stackOverflow for line intersection functions
+https://stackoverflow.com/questions/9043805/test-if-two-lines-intersect-javascript-function/24392281#24392281
+
+David Bouchard @ David Bouchard official YouTube channel for ToneJS and TonalJS tutorials
+https://www.youtube.com/@davidbouchard
+*/
+
 let simulationFrameRate = 60; // frame rate
 let strings = []; // the pinchies stay here
 let walls = []; // the walls on the screen at any point
@@ -239,6 +250,7 @@ class StringObj {
       let nextPosition = this.position.copy().add(this.velocity);
 
       if (intersects(this.position.x, this.position.y, nextPosition.x, nextPosition.y, wall.x1, wall.y1, wall.x2, wall.y2)) { // original content of the conditional: (distanceFromWall - lineLength) <= 0.2
+        ////////////////////////////////////////////////////////////// Calculating ANGLE of hitting the walls
         // let lineXVector = wall.x2 - wall.x1;
         // let lineYVector = wall.y2 - wall.y1;
         // let theDotProduct = lineXVector * this.velocity.x + lineYVector * this.velocity.y;
@@ -253,6 +265,7 @@ class StringObj {
 
         // let angle = Math.acos(theDotProduct / (lineMagnitude * velocityMagnitude));
         // let angleMagnitude = Math.abs((angle * 180) / PI);
+        ////////////////////////////////////////////////////////////// Calculating ANGLE of hitting the walls
 
         // if(angleMagnitude % 180 == 0){
         //   this.velocity.x = -this.velocity.x;
@@ -288,9 +301,15 @@ class StringObj {
           if(data != false){
             if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold){
               this.velocity = createVector(random(-2, 2), random(-2, 2)); // move around in a random direction, cause it is scared
-              let newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
+              
+              console.log("My previous note was " + this.freq + " :)");
+              let newNote;
+              if(this.freq.length === 2)
+                newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
+              else if(this.freq.length === 3)
+                newNote = this.freq.slice(0, 2) + "" + (parseInt(this.freq.slice(2, 3)) + 1);
 
-              // console.log("My new note is " + newNote + " :)");
+              console.log("My new note is " + newNote + " :)");
               // this.sampler.triggerAttackRelease(newNote, '8n'); // make its noise but an octave higher, cause it is stressed
               this.synth.triggerAttack(newNote);
             }
@@ -349,11 +368,22 @@ class StringObj {
     for (let i = 0; i < this.segments.length; i++) {
       let segment = this.segments[i];
 
-      // these use Perlin noise and make the bodies of the pinchies look creepy. might become useful later
-      // let masterfullyCraftedX = segment.x + noise(segment.x) * 10 * (i % 2) * Math.round(random(-1, 1));
-      // let masterfullyCraftedY = segment.y + noise(segment.y) * 10 * (i % 2) * Math.round(random(-1, 1));
+      switch (this.feeling){
+        case "happy":
+          curveVertex(segment.x, segment.y);
+          break;
+        case "sad":
+          curveVertex(segment.x, segment.y);
+          break;
+        case "scared":
+          // these use Perlin noise and make the bodies of the pinchies look creepy. might become useful later
+          let masterfullyCraftedX = segment.x + noise(segment.x, frameCount) * 10 * (i % 2) * Math.round(random(-1, 1));
+          let masterfullyCraftedY = segment.y + noise(segment.y, frameCount) * 10 * (i % 2) * Math.round(random(-1, 1));
+          curveVertex(masterfullyCraftedX, masterfullyCraftedY);
+          break;
+      }
 
-      curveVertex(segment.x, segment.y);
+      
     }
     endShape();
   
@@ -858,9 +888,6 @@ function gotHands(results) {
   hands = results;
 }
 
-/* Credit Dan Fox @ stackOverflow
-https://stackoverflow.com/questions/9043805/test-if-two-lines-intersect-javascript-function/24392281#24392281
-*/
 // returns true if the line from (a,b)->(c,d) intersects with (p,q)->(r,s)
 function intersects(a,b,c,d,p,q,r,s) {
   var det, gamma, lambda;
