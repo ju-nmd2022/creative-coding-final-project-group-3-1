@@ -373,13 +373,13 @@ class StringObj {
           curveVertex(segment.x, segment.y);
           break;
         case "sad":
-          curveVertex(segment.x, segment.y);
-          break;
-        case "scared":
           // these use Perlin noise and make the bodies of the pinchies look creepy. might become useful later
           let masterfullyCraftedX = segment.x + noise(segment.x, frameCount) * 10 * (i % 2) * Math.round(random(-1, 1));
           let masterfullyCraftedY = segment.y + noise(segment.y, frameCount) * 10 * (i % 2) * Math.round(random(-1, 1));
           curveVertex(masterfullyCraftedX, masterfullyCraftedY);
+          break;
+        case "scared":
+          curveVertex(segment.x, segment.y);
           break;
       }
 
