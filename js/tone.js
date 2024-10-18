@@ -302,14 +302,14 @@ class StringObj {
             if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold){
               this.velocity = createVector(random(-2, 2), random(-2, 2)); // move around in a random direction, cause it is scared
               
-              console.log("My previous note was " + this.freq + " :)");
+              // console.log("My previous note was " + this.freq + " :)");
               let newNote;
               if(this.freq.length === 2)
                 newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
               else if(this.freq.length === 3)
                 newNote = this.freq.slice(0, 2) + "" + (parseInt(this.freq.slice(2, 3)) + 1);
 
-              console.log("My new note is " + newNote + " :)");
+              // console.log("My new note is " + newNote + " :)");
               // this.sampler.triggerAttackRelease(newNote, '8n'); // make its noise but an octave higher, cause it is stressed
               this.synth.triggerAttack(newNote);
             }
