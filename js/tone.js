@@ -188,7 +188,7 @@ class StringObj {
     this.freq = random(noteScale); // this.freq = random(900, 1100); // random(261.63, 1046.50);//random(200, 800);
     this.synth = new Tone.AMSynth({
       envelope: {
-        attack: 0.05,
+        attack: 0.5,
         decay: 0.3,
         sustain: 0.5,
         release: 0.8
@@ -288,11 +288,11 @@ class StringObj {
           if(data != false){
             if((dist(data.centerX, data.centerY, this.position.x, this.position.y) < 300) && data.pinch <= pinchSelectThreshold){
               this.velocity = createVector(random(-2, 2), random(-2, 2)); // move around in a random direction, cause it is scared
-              // let newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
+              let newNote = this.freq.slice(0, 1) + "" + (parseInt(this.freq.slice(1, 2)) + 1);
 
               // console.log("My new note is " + newNote + " :)");
               // this.sampler.triggerAttackRelease(newNote, '8n'); // make its noise but an octave higher, cause it is stressed
-              this.synth.triggerAttack(this.freq * 2);
+              this.synth.triggerAttack(newNote);
             }
           }
         }
